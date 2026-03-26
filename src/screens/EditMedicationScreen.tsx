@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { scheduleMedicationNotification } from '../services/notifications'
 import {
   View,
   Text,
@@ -9,49 +8,47 @@ import {
   Alert,
   ScrollView,
 } from 'react-native'
+import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useMedStore } from '../store/useMedStore'
+import { Medication } from '../types/medication'
+import { scheduleMedicationNotification } from '../services/notifications'
 
-export default function AddMedicationScreen() {
-  const [name, setName] = useState('')
-  const [dosage, setDosage] = useState('')
-  const [frequency, setFrequency] = useState('')
-  const [time, setTime] = useState('')
+type RootStackParamList = {
+  EditMedication: { medication: Medication }
+}
+
+type Props = NativeStackScreenProps<RootStackParamList, 'EditMedication'>
+
+export default function EditMedicationScreen({ route, navigation }: Props) {
+  const { medication } = route.params
+  const { updateMedication, theme } = useMedStore()
+
+  const [name, setName] = useState(medication.name)
+  const [dosage, setDosage] = useState(medication.dosage)
+  const [frequency, setFrequency] = useState(medication.frequency)
+  const [time, setTime] = useState(medication.time)
   const [loading, setLoading] = useState(false)
-  const { addMedication, theme } = useMedStore()
 
-  const handleAdd = async () => {
+  const handleUpdate = async () => {
     if (!name || !dosage || !frequency || !time) {
-      Alert.alert('Error', 'Please fill in all fields')
-      return
+        Alert.alert('Error', 'Please fill in all fields')
+        return
     }
 
     setLoading(true)
-    await addMedication({ name, dosage, frequency, time })
-
-    // Schedule notification
-    const { medications } = useMedStore.getState()
-    const newMed = medications[0]
-    if (newMed) {
-      await scheduleMedicationNotification(newMed.name, newMed.time, newMed.id)
-    }
-
-    Alert.alert('Success', 'Medication added and reminder set! 🔔')
-    setName('')
-    setDosage('')
-    setFrequency('')
-    setTime('')
+    await updateMedication(medication.id, { name, dosage, frequency, time })
+    await scheduleMedicationNotification(name, time, medication.id)
     setLoading(false)
-  }
+    navigation.goBack()
+    }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <Text style={[styles.title, { color: theme.text }]}>
-        Add Medication ➕
+        Edit Medication ✏️
       </Text>
 
-      <Text style={[styles.label, { color: theme.text }]}>
-        Medication Name
-      </Text>
+      <Text style={[styles.label, { color: theme.text }]}>Medication Name</Text>
       <TextInput
         style={[styles.input, { backgroundColor: theme.card, borderColor: theme.border, color: theme.text }]}
         placeholder="e.g. Aspirin"
@@ -89,11 +86,11 @@ export default function AddMedicationScreen() {
 
       <TouchableOpacity
         style={[styles.button, { backgroundColor: theme.primary }]}
-        onPress={handleAdd}
+        onPress={handleUpdate}
         disabled={loading}
       >
         <Text style={styles.buttonText}>
-          {loading ? 'Adding...' : 'Add Medication'}
+          {loading ? 'Saving...' : 'Save Changes'}
         </Text>
       </TouchableOpacity>
     </ScrollView>

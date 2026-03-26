@@ -1,9 +1,18 @@
 import { useState, useEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Switch,
+} from 'react-native'
 import { supabase } from '../services/supabase'
+import { useMedStore } from '../store/useMedStore'
 
 export default function ProfileScreen() {
   const [user, setUser] = useState<any>(null)
+  const { theme, isDarkMode, toggleTheme } = useMedStore()
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -26,23 +35,49 @@ export default function ProfileScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.avatar}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
         <Text style={styles.avatarText}>👤</Text>
       </View>
 
-      <Text style={styles.email}>{user?.email}</Text>
-      <Text style={styles.joined}>
+      <Text style={[styles.email, { color: theme.text }]}>{user?.email}</Text>
+      <Text style={[styles.joined, { color: theme.subtext }]}>
         Joined {new Date(user?.created_at).toLocaleDateString()}
       </Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Account Info</Text>
-        <Text style={styles.cardText}>Email: {user?.email}</Text>
-        <Text style={styles.cardText}>ID: {user?.id?.slice(0, 8)}...</Text>
+      <View style={[styles.card, { backgroundColor: theme.card }]}>
+        <Text style={[styles.cardTitle, { color: theme.text }]}>
+          Account Info
+        </Text>
+        <Text style={[styles.cardText, { color: theme.subtext }]}>
+          Email: {user?.email}
+        </Text>
+        <Text style={[styles.cardText, { color: theme.subtext }]}>
+          ID: {user?.id?.slice(0, 8)}...
+        </Text>
       </View>
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+      <View style={[styles.card, { backgroundColor: theme.card }]}>
+        <Text style={[styles.cardTitle, { color: theme.text }]}>
+          Appearance
+        </Text>
+        <View style={styles.themeRow}>
+          <Text style={[styles.cardText, { color: theme.subtext }]}>
+            Dark Mode
+          </Text>
+          <Switch
+            value={isDarkMode}
+            onValueChange={toggleTheme}
+            trackColor={{ false: '#ddd', true: theme.primary }}
+            thumbColor="#fff"
+          />
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={[styles.logoutBtn, { backgroundColor: theme.danger }]}
+        onPress={handleLogout}
+      >
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
     </View>
@@ -53,14 +88,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
-    backgroundColor: '#f8f9fa',
     alignItems: 'center',
   },
   avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 24,
@@ -68,22 +101,25 @@ const styles = StyleSheet.create({
   },
   avatarText: { fontSize: 36 },
   email: { fontSize: 18, fontWeight: 'bold', marginBottom: 4 },
-  joined: { fontSize: 14, color: '#999', marginBottom: 32 },
+  joined: { fontSize: 14, marginBottom: 32 },
   card: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
   cardTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
-  cardText: { fontSize: 14, color: '#666', marginBottom: 6 },
+  cardText: { fontSize: 14, marginBottom: 6 },
+  themeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   logoutBtn: {
-    backgroundColor: '#FF3B30',
     borderRadius: 8,
     padding: 16,
     width: '100%',

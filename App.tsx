@@ -1,13 +1,23 @@
+import { registerForPushNotifications } from './src/services/notifications'
 import { useEffect, useState } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { supabase } from './src/services/supabase'
 import AuthScreen from './src/screens/AuthScreen'
 import HomeScreen from './src/screens/HomeScreen'
 import AddMedicationScreen from './src/screens/AddMedicationScreen'
 import ProfileScreen from './src/screens/ProfileScreen'
+import EditMedicationScreen from './src/screens/EditMedicationScreen'
 import { Session } from '@supabase/supabase-js'
+import { Medication } from './src/types/medication'
 
+export type RootStackParamList = {
+  Tabs: undefined
+  EditMedication: { medication: Medication }
+}
+
+const Stack = createNativeStackNavigator<RootStackParamList>()
 const Tab = createBottomTabNavigator()
 
 const TabNavigator = () => (
@@ -47,11 +57,31 @@ export default function App() {
     supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
     })
+
+    registerForPushNotifications().then((granted) => {
+      console.log('Notification permission granted:', granted)
+    })
   }, [])
+  
 
   return (
     <NavigationContainer>
-      {session ? <TabNavigator /> : <AuthScreen />}
+      {session ? (
+        <Stack.Navigator>
+          <Stack.Screen
+            name="Tabs"
+            component={TabNavigator}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="EditMedication"
+            component={EditMedicationScreen}
+            options={{ title: 'Edit Medication' }}
+          />
+        </Stack.Navigator>
+      ) : (
+        <AuthScreen />
+      )}
     </NavigationContainer>
   )
 }
